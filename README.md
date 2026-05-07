@@ -1,90 +1,116 @@
 # Team Task Manager
 
-A full-stack Team Task Management application built for the assignment in `Team_Task_Manager_Assignment.pdf`. It uses a single deployable Node/Express service, a React/Vite frontend, Prisma ORM, PostgreSQL, JWT bearer authentication, and server-side role-based access control.
+Team Task Manager is a full-stack web application for organizing project work across admins and members. It provides authenticated project spaces, invite-code based membership, role-aware task management, task status updates, and dashboard metrics from a single deployable Node/Express service with a React frontend.
+
+## Links
+
+- Live app: https://team-task-manager-production-1eee.up.railway.app
+- GitHub repository: https://github.com/Trinadh1920/Assignment_Task_manager.git
 
 ## Features
 
-- Signup with name, email, and password.
-- Secure login with bcrypt password hashing and signed JWTs.
-- Create projects; the creator is automatically assigned the Admin role.
-- Join projects using invite codes.
-- Admins can add/remove members, create tasks, assign tasks, delete tasks, and manage all project tasks.
-- Members can see their assigned projects and only view/update tasks assigned to them.
-- Tasks include title, description, due date, priority, assignee, and status.
-- Dashboard metrics include total tasks, status buckets, tasks per user, and overdue task count.
-- RESTful APIs with Zod validation and clear HTTP errors.
-- Railway-ready build/start commands and PostgreSQL datasource.
+- User signup and login with hashed passwords and JWT authentication
+- Project creation with the creator assigned as project admin
+- Invite-code based project joining
+- Admin controls for members, task creation, assignment, deletion, and project task management
+- Member access limited to assigned projects and assigned tasks
+- Task fields for title, description, due date, priority, assignee, and status
+- Dashboard metrics for total tasks, status counts, tasks per user, and overdue tasks
+- REST API validation with Zod and consistent HTTP errors
+- Production build that serves the React app from the Express service
 
 ## Tech Stack
 
-- Node 20, Express, TypeScript
+- Node.js 20, Express, TypeScript
 - React 18, Vite, TypeScript
-- Prisma with PostgreSQL
+- Prisma ORM with PostgreSQL
 - bcryptjs, jsonwebtoken, Zod
+- Vitest for tests
 
 ## Local Setup
 
-PostgreSQL is required locally because Prisma is configured with the PostgreSQL provider for Railway compatibility.
+Install dependencies:
 
-1. Install dependencies:
+```bash
+npm install
+```
 
-   ```bash
-   npm install
-   ```
+Create a local environment file:
 
-2. Create `.env` from `.env.example` and set `DATABASE_URL` plus `JWT_SECRET`.
+```bash
+cp .env.example .env
+```
 
-   ```bash
-   cp .env.example .env
-   ```
+Start PostgreSQL locally. One Docker option is:
 
-3. Run migrations and seed demo data:
+```bash
+docker run --name team-task-manager-postgres \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=postgres \
+  -e POSTGRES_DB=team_task_manager \
+  -p 5432:5432 \
+  -d postgres:16
+```
 
-   ```bash
-   npm run migrate
-   npm run seed
-   ```
+Run database migrations and seed local demo data:
 
-4. Start development servers:
+```bash
+npm run migrate
+npm run seed
+```
 
-   ```bash
-   npm run dev
-   ```
+Start the development servers:
 
-   The API runs on `http://localhost:3000`; the Vite app runs on `http://localhost:5173`.
+```bash
+npm run dev
+```
 
-## Demo Login
+The API runs on `http://localhost:3000`, and the Vite frontend runs on `http://localhost:5173`.
 
-After seeding:
+## Local Demo Credentials
+
+These credentials are created only when `npm run seed` is run against a local database:
 
 - Admin: `admin@example.com`
 - Member: `member@example.com`
-- Password for both: `Password123!`
-- Demo project invite code: `DEMO-TEAM`
+- Password: `Password123!`
+- Demo invite code: `DEMO-TEAM`
 
-## Production Build
+## Environment Variables
 
-```bash
-npm run build
-npm run start
-```
+| Variable | Required | Description |
+| --- | --- | --- |
+| `DATABASE_URL` | Yes | PostgreSQL connection string used by Prisma |
+| `JWT_SECRET` | Yes | Secret used to sign and verify JWTs |
+| `PORT` | No | Express server port; defaults to `3000` locally |
+| `VITE_API_URL` | No | Development API base URL; leave blank in production for same-origin `/api` calls |
 
-`npm run start` serves the compiled React app from the Express service and binds to `process.env.PORT`.
+## Scripts
+
+| Script | Purpose |
+| --- | --- |
+| `npm run dev` | Runs the API and Vite dev server together |
+| `npm run migrate` | Applies Prisma migrations in local development |
+| `npm run migrate:deploy` | Applies Prisma migrations in production/deployment |
+| `npm run seed` | Seeds local demo users, project, and tasks |
+| `npm run test` | Runs the Vitest test suite |
+| `npm run typecheck` | Runs TypeScript checks for frontend and server |
+| `npm run build` | Generates Prisma client, builds the React app, and compiles the server |
+| `npm run start` | Starts the compiled production server |
 
 ## Railway Deployment
 
-1. Create a Railway project and add a PostgreSQL database.
-2. Set environment variables:
-   - `DATABASE_URL` from the Railway PostgreSQL plugin
-   - `JWT_SECRET` to a long random value
-   - `NODE_ENV=production`
-3. Deploy the repository. `railway.json` uses:
-   - Build: `npm install && npm run build`
-   - Start: `npm run migrate:deploy && npm run start`
+The project is configured for Railway with `railway.json`.
 
-The frontend uses same-origin `/api` calls in production, so no production `VITE_API_URL` is required.
+1. Create a Railway project and add a PostgreSQL database.
+2. Set `DATABASE_URL`, `JWT_SECRET`, and `NODE_ENV=production` in Railway.
+3. Deploy the repository.
+
+Railway uses `npm install && npm run build` for the build command and `npm run migrate:deploy && npm run start` for the start command. In production, the frontend calls the API through same-origin `/api` routes.
 
 ## API Overview
+
+Authenticated requests use the `Authorization: Bearer <token>` header.
 
 - `POST /api/auth/signup`
 - `POST /api/auth/login`
@@ -100,15 +126,3 @@ The frontend uses same-origin `/api` calls in production, so no production `VITE
 - `PATCH /api/tasks/:taskId`
 - `DELETE /api/tasks/:taskId`
 - `GET /api/projects/:projectId/dashboard`
-
-Use the `Authorization: Bearer <token>` header for authenticated requests.
-
-## Verification
-
-```bash
-npm run test
-npm run typecheck
-npm run build
-```
-
-Full API smoke tests require a reachable PostgreSQL database with `DATABASE_URL` set.
